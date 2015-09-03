@@ -1,3 +1,3 @@
 RewriteEngine on
-RewriteCond %{REQUEST_FILENAME} !index\.php
+RewriteCond %{REQUEST_FILENAME} !(index\.php|healthcheck\.php)
 RewriteRule .* index.php
