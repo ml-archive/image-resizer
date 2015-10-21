@@ -2,11 +2,6 @@
 
 namespace Fuzz\ImageResizer;
 
-/**
- * @file
- *
- * Magical image resizer.
- */
 use Imagick;
 use InvalidArgumentException;
 
@@ -39,6 +34,27 @@ class Resizer
 	public $file;
 
 	/**
+	 * Ensure that the request contains valid options
+	 *
+	 * @param array $size_options
+	 */
+	private function validateOptions(array $size_options)
+	{
+		$required_options = [
+			'width' => 'is_numeric',
+			'height' => 'is_numeric',
+		];
+
+
+		foreach ($required_options as $required => $validator) {
+			if (is_null($size_options[$required]) || ! $validator($size_options[$required])) {
+				http_response_code(400);
+				throw new InvalidArgumentException("The $required parameter is missing or invalid.");
+			}
+		}
+	}
+
+	/**
 	 * Class constructor.
 	 *
 	 * @param \Fuzz\ImageResizer\File $file
@@ -53,7 +69,6 @@ class Resizer
 		$this->file = $file;
 		$this->validateFile();
 		$this->crop = $crop;
-		// @todo validate config
 	}
 
 	/**
@@ -87,6 +102,7 @@ class Resizer
 	 */
 	public function resizeImage($size_info)
 	{
+		$this->validateOptions($size_info);
 		// Was an image format passed?
 		if (isset($size_info['format'])) {
 			// If so, set our image format to what was passed

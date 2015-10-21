@@ -12,6 +12,8 @@ use Fuzz\ImageResizer\Resizer;
 /**
  * Set things up for the resizer
  */
+Configurator::validateEnvironment();
+
 $configurator = new Configurator;
 $configurator->setupFile(getenv('ALLOWED_HOSTS'));
 $configurator->setHeaders();
@@ -25,4 +27,3 @@ $image = new Resizer($configurator->file);
  * Return the magically resized image
  */
 echo $image->resizeImage($configurator->config);
-exit;

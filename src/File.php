@@ -218,8 +218,7 @@ class File
 	 */
 	public function getSize()
 	{
-		return $this->info->getSize(); // @todo this should be right
-		return strlen($this->getRaw());
+		return $this->info->getSize();
 	}
 
 	/**

@@ -36,6 +36,20 @@ class Configurator
 	public $file;
 
 	/**
+	 * Return an RFC {large number here} compliant date from a Carbon date object
+	 *
+	 * Example: Wed, 21 Oct 2015 13:48:28 GMT
+	 *
+	 * @param \Carbon\Carbon $carbon
+	 * @param int            $offset
+	 * @return string
+	 */
+	private function getRfcCompliantDate(Carbon $carbon, $offset = 0)
+	{
+		return gmdate('D, d M Y H:i:s', $carbon->addHours($offset)->getTimestamp()) . ' GMT';
+	}
+
+	/**
 	 * Determine an appropriate source for the file
 	 *
 	 * @return void
@@ -60,6 +74,7 @@ class Configurator
 	protected function checkDomain(array $allowed_hosts)
 	{
 		$source_host = parse_url($this->source)['host']; // google.com
+		$def = in_array($source_host, $allowed_hosts);
 
 		if (! in_array($source_host, $allowed_hosts)) {
 			http_response_code(401);
@@ -78,8 +93,8 @@ class Configurator
 
 		$this->config = [
 			'height' => $this->request->get('height'),
-			'width' => $this->request->get('width'),
-			'crop' => (bool) $this->request->get('crop'),
+			'width'  => $this->request->get('width'),
+			'crop'   => (bool) $this->request->get('crop'),
 		];
 	}
 
@@ -93,7 +108,6 @@ class Configurator
 		$this->checkDomain(explode(',', $allowed_hosts));
 
 		// Setup file
-		// @todo whitelisted domains
 		return $this->file = File::createFromBlob(file_get_contents($this->source));
 	}
 
@@ -104,16 +118,39 @@ class Configurator
 	 */
 	public function setHeaders()
 	{
-		// Set proper headers afterwards.
+		$expire_in = getenv('CACHE_EXPIRATION_HOURS') ?: 2880; //120 days by default
+		// Set time for cache expires. Default to 120 days (2880 hours)
+		$expires         = $this->getRfcCompliantDate(Carbon::now(), $expire_in);
+		$last_modified   = $this->getRfcCompliantDate(Carbon::now(), 0);
+		$max_age_seconds = $expire_in * 60 * 60;
+
+		header("Last-Modified: $last_modified");
+		header("Cache-Control: max-age=$max_age_seconds, must-revalidate");
+		header("Expires: $expires");
+
+		// File specific headers
 		header('Content-Type: ' . $this->file->getMimeType());
-		header('Content-Length: ' . $this->file->getSize()); // This wasn't returning the proper length... @todo needs to be fixed.
+		header('Content-Length: ' . $this->file->getSize());
+	}
 
-		// Set time for cache expires @todo this should be a config setting. PS: This code is ugly :(.
+	/**
+	 * Require some environment configurations to be present
+	 *
+	 * @return void
+	 * @throws \LogicException
+	 */
+	public static function validateEnvironment()
+	{
+		$required_variables = [
+			'ALLOWED_HOSTS',
+			'CACHE_EXPIRATION_HOURS',
+		];
 
-		$gmdate_expires = gmdate('D, d M Y H:i:s', strtotime ('now +120  days')) . ' GMT';
-		$gmdate_modified = gmdate('D, d M Y H:i:s') . ' GMT';
-		header('Last-Modified: ' . $gmdate_modified);
-		header('Cache-Control: max-age=10368000, must-revalidate'); //120 days
-		header('Expires: ' . $gmdate_expires);
+		foreach ($required_variables as $required) {
+			if (! getenv($required)) {
+				http_response_code(500);
+				throw new \LogicException("The $required configuration is missing.");
+			}
+		}
 	}
 }
