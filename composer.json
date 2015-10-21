@@ -11,7 +11,8 @@
 	    "php": ">=5.5.0",
 	    "ext-imagick": "*",
         "symfony/http-foundation": "2.7.3",
-        "vlucas/phpdotenv": "^2.0"
+        "vlucas/phpdotenv": "^2.0",
+        "nesbot/carbon": "^1.20"
     },
 	"autoload": {
 		"psr-4": {

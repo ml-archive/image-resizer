@@ -1,53 +1,50 @@
-<?php namespace Fuzz\ImageResizer;
+<?php
+
+namespace Fuzz\ImageResizer;
 
 /**
  * @file
  *
  * Magical image resizer.
  */
-use Illuminate\Support\Facades\Config;
 use Imagick;
 use InvalidArgumentException;
 
+/**
+ * Class Resizer
+ *
+ * @package Fuzz\ImageResizer
+ */
 class Resizer
 {
 	/**
 	 * The actual resizer
+	 *
 	 * @var Imagick
 	 */
 	private $image_resizer;
 
+	/**
+	 * Should we crop the file?
+	 *
+	 * @var bool
+	 */
 	private $crop;
-	private $config;
-	private $geometry;
 
-	public  $file;
-	public  $sizes;
+	/**
+	 * File object container
+	 *
+	 * @var \Fuzz\ImageResizer\File
+	 */
+	public $file;
 
 	/**
 	 * Class constructor.
 	 *
-	 * @param Fuzz\File\File $file
+	 * @param \Fuzz\ImageResizer\File $file
 	 *        Instance of the image to resize
-	 * @param Array $config
-	 *        Configuration array of the following form:
-	 *        array(
-	 *           'sizes' => array(
-	 *               '<slug>' => array(
-	 *                   'width'  => <w>,
-	 *                   'height' => <h>,
-	 *               ),
-	 *               ...
-	 *           ), // REQUIRED sizing array
-	 *           'width'     => <w>,  // OPTIONAL required width
-	 *           'height'    => <h>, // OPTIONAL required height
-	 *           'ratio'     => <r>, // OPTIONAL required aspect ratio <w>:<h>
-	 *           'tolerance' => <t>, // OPTIONAL acceptable tolerance from <r>
-	 *         )
-	 * @param bool $crop
+	 * @param bool                    $crop
 	 *        Flag to determine if we're cropping to resize or not
-	 *
-	 * @return void
 	 */
 	public function __construct(File $file, $crop = false)
 	{
@@ -55,16 +52,8 @@ class Resizer
 
 		$this->file = $file;
 		$this->validateFile();
-
-//		$this->config = $config;
-//		$this->validateConfig();
-
-//		$this->sizes = $this->config['sizes'];
-
-//		$this->validateSizes();
 		$this->crop = $crop;
-
-//		$this->rewind();
+		// @todo validate config
 	}
 
 	/**
@@ -77,43 +66,27 @@ class Resizer
 	private function validateFile()
 	{
 		if (! $this->file->isImage()) {
+			http_response_code(400);
 			throw new InvalidArgumentException('The file is not an image. Abort!');
 		}
 	}
 
 	/**
-	 * Validate that the config passed has appropriate resize specifications.
-	 *
-	 * @return void
-	 *
-	 * @throws InvalidArgumentException If the config does not match the spec
-	 */
-//	private function validateConfig()
-//	{
-//		if (! isset($this->config['sizes'])) {
-//			throw new InvalidArgumentException('The configuration does not specify sizes');
-//		}
-//
-//		foreach ($this->config['sizes'] as $size) {
-//			if (! isset($size['width']) || ! isset($size['height'])
-//				|| ! is_int($size['width']) || ! is_int($size['height'])
-//			) {
-//				throw new InvalidArgumentException(
-//					'The configuration does not specify valid integer pixel width and height for all sizes'
-//				);
-//			}
-//		}
-//	}
-
-	/**
 	 * Resize the image based on passed size information.
 	 *
 	 * @param  array $size_info
-	 *         Contains height, width, and optional format params
+	 *           Configuration array of the following form:
+	 *           [
+	 *           'width'     => <w>,  // OPTIONAL required width
+	 *           'height'    => <h>, // OPTIONAL required height
+	 *           'ratio'     => <r>, // OPTIONAL required aspect ratio <w>:<h>
+	 *           'tolerance' => <t>, // OPTIONAL acceptable tolerance from <r>
+	 *           ]
 	 *
 	 * @return string
 	 */
-	public function resizeImage($size_info) {
+	public function resizeImage($size_info)
+	{
 		// Was an image format passed?
 		if (isset($size_info['format'])) {
 			// If so, set our image format to what was passed
@@ -130,7 +103,7 @@ class Resizer
 		$this->image_resizer->setImageFormat($image_format);
 
 		// Resize our image based on our size info and cropping preferences
-		if ($this->crop || (isset($size_info['crop']) && ($size_info['crop'] === true)) || (isset($this->config['crop']) && ($this->config['crop'] === true))) {
+		if ($this->crop || (isset($size_info['crop']) && ($size_info['crop'] === true))) {
 			$this->image_resizer->cropThumbnailImage($size_info['width'], $size_info['height']);
 		} else {
 			$this->image_resizer->thumbnailImage($size_info['width'], $size_info['height'], true /* Bestfit */);
