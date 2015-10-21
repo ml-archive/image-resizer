@@ -59,8 +59,8 @@ class Configurator
 		// Default
 		$path = $this->request->getPathInfo();
 
-		if ($this->request->get('src')) {
-			$this->source = $this->request->get('src');
+		if ($this->request->get('source')) {
+			$this->source = $this->request->get('source');
 		} else {
 			$this->source = $path;
 		}
