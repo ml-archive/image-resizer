@@ -124,7 +124,7 @@ class Configurator
 		$max_age_seconds = $expire_in * 60 * 60;
 
 		header("Last-Modified: $last_modified");
-		header("Cache-Control: max-age=$max_age_seconds, must-revalidate");
+		header("Cache-Control: max-age=$max_age_seconds");
 		header("Expires: $expires");
 
 		// File specific headers
