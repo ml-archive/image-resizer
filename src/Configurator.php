@@ -129,7 +129,7 @@ class Configurator
 
 		// File specific headers
 		header('Content-Type: ' . $this->file->getMimeType());
-		header('Content-Length: ' . $this->file->getSize());
+		//header('Content-Length: ' . $this->file->getSize()); @todo This is causing problems with Cloudfront caching, why?
 	}
 
 	/**
