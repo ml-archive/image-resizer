@@ -41,10 +41,9 @@ class Resizer
 	private function validateOptions(array $size_options)
 	{
 		$required_options = [
-			'width' => 'is_numeric',
+			'width'  => 'is_numeric',
 			'height' => 'is_numeric',
 		];
-
 
 		foreach ($required_options as $required => $validator) {
 			if (! isset($size_options[$required]) || is_null($size_options[$required]) || ! $validator($size_options[$required])) {

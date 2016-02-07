@@ -44,7 +44,7 @@ class ResizerTest extends ImageResizerTestCase
 		$resizer = new Resizer($this->getImageFile(300, 500), false);
 
 		$options = [
-			'width' => 'NotNumeric',
+			'width'  => 'NotNumeric',
 			'height' => 400,
 		];
 
@@ -70,7 +70,7 @@ class ResizerTest extends ImageResizerTestCase
 
 		$options = [
 			'height' => 'NotNumeric',
-			'width' => 400,
+			'width'  => 400,
 		];
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The height parameter is missing or invalid.');
@@ -91,12 +91,12 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testResizerReceivesImageBlob()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
+			'width'  => '400',
 		];
 
 		$resizer->resizeImage($options, false);
@@ -109,13 +109,14 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItSetsExplicitFormat()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
-			'format' => 'gif', // Default is png
+			'width'  => '400',
+			'format' => 'gif',
+			// Default is png
 		];
 
 		$resizer->resizeImage($options, false);
@@ -125,12 +126,12 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItSetsImplicitFormat()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
+			'width'  => '400',
 		];
 
 		$resizer->resizeImage($options, false);
@@ -140,12 +141,12 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItCanCropOnResizeImage()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, true);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
+			'width'  => '400',
 		];
 
 		$resizer->resizeImage($options, false);
@@ -157,13 +158,13 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItCanResizeImageWithoutCrop()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
-			'crop' => false
+			'width'  => '400',
+			'crop'   => false
 		];
 
 		$resizer->resizeImage($options, false);
@@ -175,13 +176,13 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItReturnsRawImageData()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
-			'crop' => false
+			'width'  => '400',
+			'crop'   => false
 		];
 
 		$image = $resizer->resizeImage($options, false);
@@ -191,13 +192,13 @@ class ResizerTest extends ImageResizerTestCase
 
 	public function testItGarbageCollectsImagickInstance()
 	{
-		$file = $this->getImageFile(300, 500);
+		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
 
 		$options = [
 			'height' => '200',
-			'width' => '400',
-			'crop' => false
+			'width'  => '400',
+			'crop'   => false
 		];
 
 		$image = $resizer->resizeImage($options);

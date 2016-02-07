@@ -44,7 +44,7 @@ class FileTest extends ImageResizerTestCase
 	public function testConstructorCanSetMimeType()
 	{
 		// default type is image/png
-		$blob = file_get_contents($this->getPlaceholditImage(300, 300));
+		$blob      = file_get_contents($this->getPlaceholditImage(300, 300));
 		$mime_type = 'AFakeMimeType';
 
 		$file = File::createFromBlob($blob, $mime_type);
@@ -65,7 +65,7 @@ class FileTest extends ImageResizerTestCase
 	public function testContructorCanSetExtension()
 	{
 		// default type is image/png
-		$blob = file_get_contents($this->getPlaceholditImage(300, 300));
+		$blob      = file_get_contents($this->getPlaceholditImage(300, 300));
 		$mime_type = 'AFakeMimeType';
 		$extension = 'gif';
 

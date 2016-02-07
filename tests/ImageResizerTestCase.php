@@ -46,7 +46,7 @@ class ImageResizerTestCase extends PHPUnit_Framework_TestCase
 	public function getPlaceholditImage($height, $width, $format = 'png')
 	{
 		$height = (string) $height;
-		$width = (string) $width;
+		$width  = (string) $width;
 
 		return "https://placeholdit.imgix.net/~text?txtsize=33&txt=350%C3%97150&w=$width&h=$height&fm=$format";
 	}
@@ -60,12 +60,12 @@ class ImageResizerTestCase extends PHPUnit_Framework_TestCase
 	public function getHeaderValue($key)
 	{
 		if (! empty($this->headers_cache)) {
-			return isset($this->headers_cache[$key]) ?$this->headers_cache[$key] : null;
+			return isset($this->headers_cache[$key]) ? $this->headers_cache[$key] : null;
 		}
 
 		// Requires XDebug installed
 		foreach (xdebug_get_headers() as $header) {
-			$split = explode(': ', $header); // ['key', 'value']
+			$split                          = explode(': ', $header); // ['key', 'value']
 			$this->headers_cache[$split[0]] = $split[1];
 		}
 

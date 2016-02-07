@@ -80,10 +80,12 @@ class File
 		$this->object = $this->info->openFile();
 
 		// Kill any temporary files created in the lifetime of this object
-		register_shutdown_function([
-			$this,
-			'unlink'
-		]);
+		register_shutdown_function(
+			[
+				$this,
+				'unlink'
+			]
+		);
 	}
 
 	/**
