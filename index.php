@@ -25,9 +25,9 @@ $configurator->setHeaders();
 /**
  * Resize the image
  */
-$image = new Resizer($configurator->file);
+$resizer = new Resizer($configurator->file);
 
 /**
  * Return the magically resized image
  */
-echo $image->resizeImage($configurator->config);
+echo $resizer->resizeImage($configurator->config);

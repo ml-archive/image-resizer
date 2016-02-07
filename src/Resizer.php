@@ -24,7 +24,7 @@ class Resizer
 	 *
 	 * @var bool
 	 */
-	private $crop;
+	public $crop;
 
 	/**
 	 * File object container
@@ -47,7 +47,7 @@ class Resizer
 
 
 		foreach ($required_options as $required => $validator) {
-			if (is_null($size_options[$required]) || ! $validator($size_options[$required])) {
+			if (! isset($size_options[$required]) || is_null($size_options[$required]) || ! $validator($size_options[$required])) {
 				http_response_code(400);
 				throw new InvalidArgumentException("The $required parameter is missing or invalid.");
 			}
@@ -98,9 +98,10 @@ class Resizer
 	 *           'tolerance' => <t>, // OPTIONAL acceptable tolerance from <r>
 	 *           ]
 	 *
+	 * @param bool   $garbage_collect
 	 * @return string
 	 */
-	public function resizeImage($size_info)
+	public function resizeImage($size_info, $garbage_collect = true)
 	{
 		$this->validateOptions($size_info);
 		// Was an image format passed?
@@ -128,10 +129,22 @@ class Resizer
 		// Get our raw image data from the resized image
 		$resized_image_data = $this->image_resizer->getImageBlob();
 
-		// Free our image resizer of our image resource, to enhance performance and make it easier to resize the NEXT image
-		// ( Garbage collect )
-		$this->image_resizer->clear();
+		if ($garbage_collect) {
+			// Free our image resizer of our image resource, to enhance performance and make it easier to resize the NEXT image
+			// ( Garbage collect )
+			$this->image_resizer->clear();
+		}
 
 		return $resized_image_data;
+	}
+
+	/**
+	 * Retrieve the Imagick instance
+	 *
+	 * @return \Imagick
+	 */
+	public function getImageResizer()
+	{
+		return $this->image_resizer;
 	}
 }

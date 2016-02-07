@@ -100,11 +100,16 @@ class Configurator
 	/**
 	 * Set up file object
 	 *
+	 * @param string|array $allowed_hosts
 	 * @return \Fuzz\ImageResizer\File
 	 */
 	public function setupFile($allowed_hosts)
 	{
-		$this->checkDomain(explode(',', $allowed_hosts));
+		if (is_string($allowed_hosts)) {
+			$this->checkDomain(explode(',', $allowed_hosts));
+		} else {
+			$this->checkDomain($allowed_hosts);
+		}
 
 		// Setup file
 		return $this->file = File::createFromBlob(file_get_contents($this->source));
