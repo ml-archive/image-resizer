@@ -89,12 +89,13 @@ class File
 	/**
 	 * Create a file from a blob.
 	 *
-	 * @param string        $blob       Raw binary data to create a file from
-	 * @param null|string   $mime_type  An optional user-declared MIME type
+	 * @param string      $blob      Raw binary data to create a file from
+	 * @param null|string $mime_type An optional user-declared MIME type
 	 *
+	 * @param null        $extension
 	 * @return static Instance of the File object created from the blob
 	 */
-	public static function createFromBlob($blob, $mime_type = null)
+	public static function createFromBlob($blob, $mime_type = null, $extension = null)
 	{
 		$temp_filename = tempnam(sys_get_temp_dir(), 'fuzz-file-');
 
@@ -102,7 +103,7 @@ class File
 
 		$symfony_file = new SymfonyFile($temp_filename);
 
-		$file = new static((new SymfonyFile($symfony_file, false)), $mime_type);
+		$file = new static((new SymfonyFile($symfony_file, false)), $mime_type, $extension);
 
 		// Store the temp filename so we can unlink it later
 		$file->setTempFilename($temp_filename);

@@ -186,6 +186,24 @@ class ResizerTest extends ImageResizerTestCase
 
 		$image = $resizer->resizeImage($options, false);
 
-		$this->assertTrue(preg_match('~^[01]+$~', $image));
+		$this->assertEquals($image, $resizer->getImageResizer()->getImageBlob());
+	}
+
+	public function testItGarbageCollectsImagickInstance()
+	{
+		$file = $this->getImageFile(300, 500);
+		$resizer = new Resizer($file, false);
+
+		$options = [
+			'height' => '200',
+			'width' => '400',
+			'crop' => false
+		];
+
+		$image = $resizer->resizeImage($options);
+
+		// Instance is now clear and we shouldn't be able to get an image blob
+		$this->setExpectedException(\ImagickException::class, 'Can not process empty Imagick object');
+		$resizer->getImageResizer()->getImageBlob();
 	}
 }
