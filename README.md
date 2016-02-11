@@ -7,7 +7,7 @@ A lightweight PHP image resizer
 1. Resize your images
 
 ### Setup
-The image resizer is intended to live as a standalone microservice behind a CDN. The first request for a query combination `http://resizer-url.com/resize/?height=300&width=400` will fall through to the resizer instance but any subsequent requests should be cached by the CDN.
+The image resizer is intended to live as a standalone microservice behind a CDN. The first request for a query combination `http://resizer-url.com/resize/?source=http://image-source.com/images/image.jpg&height=300&width=400` will fall through to the resizer instance but any subsequent requests should be cached by the CDN.
 
 #### Environment Variables
 The resizer depends on a few configurable environment variables (can be loaded from a dotenv file):
