@@ -1,6 +1,8 @@
 {
 	"name": "fuzz/image-resizer",
 	"description": "Image Resizing micro service.",
+	"license": "MIT",
+	"homepage": "https://fuzzproductions.com/",
 	"authors": [
 		{
 			"name": "Fuzz Productions",
