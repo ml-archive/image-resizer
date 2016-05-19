@@ -15,6 +15,13 @@ The resizer depends on a few configurable environment variables (can be loaded f
 * `CACHE_EXPIRATION_HOURS` - length (in hours) to set `Cache-Control` with the `max-age` directive and `Expires` headers. Any CDN should obey your cache rules and cache objects appropriately.
 * `APP_ENV` - app environment
 
+#### Best Practices
+In light of exploits like https://imagetragick.com/, we recommend that your implementation:
+1. Uses the latest version of ImageMagick
+2. Follows mitigation procedures listed on https://imagetragick.com/
+3. Has severely restricted access to any other resources (on the same network or otherwise) 
+3. Only processes images from sources you whitelist
+
 #### Healthcheck
 `healthcheck.php` will return a 200 for Load Balancer health pings.
 
