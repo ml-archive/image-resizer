@@ -30,4 +30,4 @@ $resizer = new Resizer($configurator->file);
 /**
  * Return the magically resized image
  */
-echo $resizer->resizeImage($configurator->config);
+echo $resizer->alterImage($configurator->config);

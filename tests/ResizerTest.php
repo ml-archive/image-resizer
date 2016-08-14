@@ -49,7 +49,7 @@ class ResizerTest extends ImageResizerTestCase
 		];
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The width parameter is missing or invalid.');
-		$resizer->resizeImage($options);
+		$resizer->alterImage($options);
 	}
 
 	public function testItThrowsExceptionOnMissingWidth()
@@ -61,7 +61,7 @@ class ResizerTest extends ImageResizerTestCase
 		];
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The width parameter is missing or invalid.');
-		$resizer->resizeImage($options);
+		$resizer->alterImage($options);
 	}
 
 	public function testItThrowsExceptionOnNonNumericHeight()
@@ -74,7 +74,7 @@ class ResizerTest extends ImageResizerTestCase
 		];
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The height parameter is missing or invalid.');
-		$resizer->resizeImage($options);
+		$resizer->alterImage($options);
 	}
 
 	public function testItThrowsExceptionOnMissingHeight()
@@ -86,7 +86,7 @@ class ResizerTest extends ImageResizerTestCase
 		];
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The height parameter is missing or invalid.');
-		$resizer->resizeImage($options);
+		$resizer->alterImage($options);
 	}
 
 	public function testResizerReceivesImageBlob()
@@ -99,12 +99,12 @@ class ResizerTest extends ImageResizerTestCase
 			'width'  => '400',
 		];
 
-		$resizer->resizeImage($options, false);
+		$resizer->alterImage($options, false);
 
 		// strcmp won't work because by this point the image blob in the imagick instance has been resized and is now different
-		//$this->assertTrue(strcmp($file->getRaw(), $resizer->getImageResizer()->getImageBlob()) === 0);
+		//$this->assertTrue(strcmp($file->getRaw(), $resizer->getImageHandler()->getImageBlob()) === 0);
 
-		$this->assertNotNull($resizer->getImageResizer()->getImageBlob());
+		$this->assertNotNull($resizer->getImageHandler()->getImageBlob());
 	}
 
 	public function testItSetsExplicitFormat()
@@ -119,9 +119,9 @@ class ResizerTest extends ImageResizerTestCase
 			// Default is png
 		];
 
-		$resizer->resizeImage($options, false);
+		$resizer->alterImage($options, false);
 
-		$this->assertEquals($options['format'], $resizer->getImageResizer()->getImageFormat());
+		$this->assertEquals($options['format'], $resizer->getImageHandler()->getImageFormat());
 	}
 
 	public function testItSetsImplicitFormat()
@@ -134,12 +134,12 @@ class ResizerTest extends ImageResizerTestCase
 			'width'  => '400',
 		];
 
-		$resizer->resizeImage($options, false);
+		$resizer->alterImage($options, false);
 
-		$this->assertEquals($file->getExtension(), $resizer->getImageResizer()->getImageFormat());
+		$this->assertEquals($file->getExtension(), $resizer->getImageHandler()->getImageFormat());
 	}
 
-	public function testItCanCropOnResizeImage()
+	public function testItCanCropOnAlterImage()
 	{
 		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, true);
@@ -149,14 +149,14 @@ class ResizerTest extends ImageResizerTestCase
 			'width'  => '400',
 		];
 
-		$resizer->resizeImage($options, false);
+		$resizer->alterImage($options, false);
 
 		// Crop option should return an image with our exact size options
-		$this->assertEquals($options['height'], $resizer->getImageResizer()->getImageHeight());
-		$this->assertEquals($options['width'], $resizer->getImageResizer()->getImageWidth());
+		$this->assertEquals($options['height'], $resizer->getImageHandler()->getImageHeight());
+		$this->assertEquals($options['width'], $resizer->getImageHandler()->getImageWidth());
 	}
 
-	public function testItCanResizeImageWithoutCrop()
+	public function testItCanAlterImageWithoutCrop()
 	{
 		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
@@ -164,14 +164,14 @@ class ResizerTest extends ImageResizerTestCase
 		$options = [
 			'height' => '200',
 			'width'  => '400',
-			'crop'   => false
+			'crop'   => false,
 		];
 
-		$resizer->resizeImage($options, false);
+		$resizer->alterImage($options, false);
 
-		$this->assertEquals($options['height'], $resizer->getImageResizer()->getImageHeight());
+		$this->assertEquals($options['height'], $resizer->getImageHandler()->getImageHeight());
 		// Because we always use best fit, final image width will be 333 pixels
-		$this->assertEquals(333, $resizer->getImageResizer()->getImageWidth());
+		$this->assertEquals(333, $resizer->getImageHandler()->getImageWidth());
 	}
 
 	public function testItReturnsRawImageData()
@@ -182,12 +182,44 @@ class ResizerTest extends ImageResizerTestCase
 		$options = [
 			'height' => '200',
 			'width'  => '400',
-			'crop'   => false
+			'crop'   => false,
 		];
 
-		$image = $resizer->resizeImage($options, false);
+		$image = $resizer->alterImage($options, false);
 
-		$this->assertEquals($image, $resizer->getImageResizer()->getImageBlob());
+		$this->assertEquals($image, $resizer->getImageHandler()->getImageBlob());
+	}
+
+	public function testItThrowsExceptionOnBadCompressionType()
+	{
+		$file    = $this->getImageFile(300, 500);
+		$resizer = new Resizer($file, false);
+
+		$options = [
+			'height'      => '200',
+			'width'       => '400',
+			'compression' => 'h264',
+			// not a valid compression type
+		];
+
+		$this->setExpectedException(\InvalidArgumentException::class, 'Invalid compression quality specified.');
+		$image = $resizer->alterImage($options, false);
+	}
+
+	public function testItSetsCompressionQuality()
+	{
+		$file    = $this->getImageFile(300, 500);
+		$resizer = new Resizer($file, false);
+
+		$options = [
+			'height'      => '200',
+			'width'       => '400',
+			'compression' => 'jpeg', // not a valid compression type
+		];
+
+		$image = $resizer->alterImage($options, false);
+
+		$this->assertEquals(\Imagick::COMPRESSION_JPEG, $resizer->getImageHandler()->getImageCompressionQuality());
 	}
 
 	public function testItGarbageCollectsImagickInstance()
@@ -198,13 +230,13 @@ class ResizerTest extends ImageResizerTestCase
 		$options = [
 			'height' => '200',
 			'width'  => '400',
-			'crop'   => false
+			'crop'   => false,
 		];
 
-		$image = $resizer->resizeImage($options);
+		$image = $resizer->alterImage($options);
 
 		// Instance is now clear and we shouldn't be able to get an image blob
 		$this->setExpectedException(\ImagickException::class, 'Can not process empty Imagick object');
-		$resizer->getImageResizer()->getImageBlob();
+		$resizer->getImageHandler()->getImageBlob();
 	}
 }

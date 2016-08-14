@@ -17,7 +17,7 @@ class Resizer
 	 *
 	 * @var Imagick
 	 */
-	private $image_resizer;
+	private $image_handler;
 
 	/**
 	 * Should we crop the file?
@@ -63,7 +63,7 @@ class Resizer
 	 */
 	public function __construct(File $file, $crop = false)
 	{
-		$this->image_resizer = new Imagick;
+		$this->image_handler = new Imagick;
 
 		$this->file = $file;
 		$this->validateFile();
@@ -88,53 +88,114 @@ class Resizer
 	/**
 	 * Resize the image based on passed size information.
 	 *
-	 * @param  array $size_info
-	 *           Configuration array of the following form:
-	 *           [
-	 *           'width'     => <w>,  // OPTIONAL required width
-	 *           'height'    => <h>, // OPTIONAL required height
-	 *           'ratio'     => <r>, // OPTIONAL required aspect ratio <w>:<h>
-	 *           'tolerance' => <t>, // OPTIONAL acceptable tolerance from <r>
-	 *           ]
+	 * @param  array $options
+	 *               Configuration array of the following form:
+	 *               [
+	 *               'width'       => <w>,  // OPTIONAL required width
+	 *               'height'      => <h>, // OPTIONAL required height
+	 *               'ratio'       => <r>, // OPTIONAL required aspect ratio <w>:<h>
+	 *               'tolerance'   => <t>, // OPTIONAL acceptable tolerance from <r>,
+	 *               'compression' => <c>, // OPTIONAL compression type, integer or string
+	 *               ]
 	 *
 	 * @param bool   $garbage_collect
 	 * @return string
 	 */
-	public function resizeImage($size_info, $garbage_collect = true)
+	public function alterImage($options, $garbage_collect = true)
 	{
-		$this->validateOptions($size_info);
+		$this->validateOptions($options);
 		// Was an image format passed?
-		if (isset($size_info['format'])) {
+		if (isset($options['format'])) {
 			// If so, set our image format to what was passed
-			$image_format = $size_info['format'];
+			$image_format = $options['format'];
 		} else {
 			// Otherwise, set our image format to the same as the current
 			$image_format = $this->file->getExtension();
 		}
 
-		// Pass our binary image data to our resizer
-		$this->image_resizer->readImageBlob($this->file->getRaw());
+		$crop        = isset($options['crop']) ? $options['crop'] : false;
+		$compression = isset($options['compression']) ? $options['compression'] : Imagick::COMPRESSION_JPEG;
 
-		// Set our image format
-		$this->image_resizer->setImageFormat($image_format);
-
-		// Resize our image based on our size info and cropping preferences
-		if ($this->crop || (isset($size_info['crop']) && ($size_info['crop'] === true))) {
-			$this->image_resizer->cropThumbnailImage($size_info['width'], $size_info['height']);
-		} else {
-			$this->image_resizer->thumbnailImage($size_info['width'], $size_info['height'], true /* Bestfit */);
-		}
+		$this->readFromBlob($this->file->getRaw());
+		$this->setImageFormat($image_format);
+		$this->setCompressionQuality($compression);
+		$this->resizeImage($options['height'], $options['width'], $crop);
 
 		// Get our raw image data from the resized image
-		$resized_image_data = $this->image_resizer->getImageBlob();
+		$resized_image_data = $this->image_handler->getImageBlob();
 
 		if ($garbage_collect) {
 			// Free our image resizer of our image resource, to enhance performance and make it easier to resize the NEXT image
 			// ( Garbage collect )
-			$this->image_resizer->clear();
+			$this->image_handler->clear();
 		}
 
 		return $resized_image_data;
+	}
+
+	/**
+	 * Resize the image
+	 *
+	 * @param int|string $height
+	 * @param int|string $width
+	 * @param bool       $crop
+	 */
+	public function resizeImage($height, $width, $crop = false)
+	{
+		if ($this->crop || $crop) {
+			$this->image_handler->cropThumbnailImage($width, $height);
+
+			return;
+		}
+
+		$this->image_handler->thumbnailImage($width, $height, true); // Best fit
+	}
+
+	/**
+	 * Read an image from a blob
+	 *
+	 * @param string $blob
+	 * @return void
+	 */
+	public function readFromBlob($blob)
+	{
+		$this->image_handler->readImageBlob($blob);
+	}
+
+	/**
+	 * Set the image format
+	 *
+	 * @param string $format
+	 * @return void
+	 */
+	public function setImageFormat($format)
+	{
+		$this->image_handler->setImageFormat($format);
+	}
+
+	/**
+	 * Set the compression quality
+	 *
+	 * @param string|int $quality
+	 * @return void
+	 */
+	public function setCompressionQuality($quality)
+	{
+		if (is_numeric($quality)) {
+			$this->image_handler->setImageCompressionQuality($quality);
+
+			return;
+		}
+
+		$quality          = strtoupper($quality);
+		$compression_type = "COMPRESSION_$quality";
+		$constant         = "Imagick::$compression_type";
+
+		if (! defined($constant) || is_null(constant("Imagick::$compression_type"))) {
+			throw new InvalidArgumentException('Invalid compression quality specified.');
+		}
+
+		$this->image_handler->setImageCompressionQuality(constant("Imagick::$compression_type"));
 	}
 
 	/**
@@ -142,8 +203,8 @@ class Resizer
 	 *
 	 * @return \Imagick
 	 */
-	public function getImageResizer()
+	public function getImageHandler()
 	{
-		return $this->image_resizer;
+		return $this->image_handler;
 	}
 }
