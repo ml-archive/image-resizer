@@ -222,7 +222,7 @@ class ResizerTest extends ImageResizerTestCase
 		$this->assertEquals(\Imagick::COMPRESSION_JPEG, $resizer->getImageHandler()->getImageCompressionQuality());
 	}
 
-	public function testItSetsDefaultsTo0CompressionQuality()
+	public function testItSetsDefaultsToNoCompression()
 	{
 		$file    = $this->getImageFile(300, 500);
 		$resizer = new Resizer($file, false);
@@ -234,7 +234,7 @@ class ResizerTest extends ImageResizerTestCase
 
 		$image = $resizer->alterImage($options, false);
 
-		$this->assertEquals(\Imagick::COMPRESSION_UNDEFINED, $resizer->getImageHandler()->getImageCompressionQuality());
+		$this->assertEquals(100, $resizer->getImageHandler()->getImageCompressionQuality());
 	}
 
 	public function testItGarbageCollectsImagickInstance()
