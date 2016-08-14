@@ -214,12 +214,27 @@ class ResizerTest extends ImageResizerTestCase
 		$options = [
 			'height'      => '200',
 			'width'       => '400',
-			'compression' => 'jpeg', // not a valid compression type
+			'compression' => 'jpeg',
 		];
 
 		$image = $resizer->alterImage($options, false);
 
 		$this->assertEquals(\Imagick::COMPRESSION_JPEG, $resizer->getImageHandler()->getImageCompressionQuality());
+	}
+
+	public function testItSetsDefaultsTo0CompressionQuality()
+	{
+		$file    = $this->getImageFile(300, 500);
+		$resizer = new Resizer($file, false);
+
+		$options = [
+			'height'      => '200',
+			'width'       => '400',
+		];
+
+		$image = $resizer->alterImage($options, false);
+
+		$this->assertEquals(\Imagick::COMPRESSION_UNDEFINED, $resizer->getImageHandler()->getImageCompressionQuality());
 	}
 
 	public function testItGarbageCollectsImagickInstance()

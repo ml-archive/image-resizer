@@ -114,7 +114,7 @@ class Resizer
 		}
 
 		$crop        = isset($options['crop']) ? $options['crop'] : false;
-		$compression = isset($options['compression']) ? $options['compression'] : Imagick::COMPRESSION_JPEG;
+		$compression = isset($options['compression']) ? $options['compression'] : Imagick::COMPRESSION_UNDEFINED;
 
 		$this->readFromBlob($this->file->getRaw());
 		$this->setImageFormat($image_format);
