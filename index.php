@@ -5,29 +5,12 @@
  */
 require __DIR__ . '/vendor/autoload.php';
 
-if (! getenv('APP_ENV')) {
-	// Load Dotenv if in a dev environment (no environment vars loaded)
-	(new \Dotenv\Dotenv(__DIR__))->load();
+use Fuzz\ImageResizer\App;
+use Fuzz\ImageResizer\ExceptionHandler;
+use Symfony\Component\HttpFoundation\Request;
+
+try {
+	echo App::run(Request::createFromGlobals());
+} catch (Exception $e) {
+	echo json_encode(ExceptionHandler::handleException($e));
 }
-
-use Fuzz\ImageResizer\Configurator;
-use Fuzz\ImageResizer\Resizer;
-
-/**
- * Set things up for the resizer
- */
-Configurator::validateEnvironment();
-
-$configurator = new Configurator;
-$configurator->setupFile(getenv('ALLOWED_HOSTS'));
-$configurator->setHeaders();
-
-/**
- * Resize the image
- */
-$resizer = new Resizer($configurator->file);
-
-/**
- * Return the magically resized image
- */
-echo $resizer->alterImage($configurator->config);

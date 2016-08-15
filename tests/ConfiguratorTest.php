@@ -5,6 +5,8 @@ namespace Fuzz\ImageResizer\Tests;
 use Carbon\Carbon;
 use Fuzz\ImageResizer\Configurator;
 use Fuzz\ImageResizer\File;
+use Mockery;
+use Symfony\Component\HttpFoundation\Request;
 
 class ConfiguratorTest extends ImageResizerTestCase
 {
@@ -24,15 +26,6 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$this->assertEquals(500, http_response_code());
 	}
 
-	public function testItRequiresCacheExpirationHours()
-	{
-		putenv('CACHE_EXPIRATION_HOURS'); // Clear env var
-		putenv('ALLOWED_HOSTS=example.com,anotherexample.com');
-		$this->setExpectedException(\LogicException::class, 'The CACHE_EXPIRATION_HOURS configuration is missing.');
-		Configurator::validateEnvironment();
-		$this->assertEquals(500, http_response_code());
-	}
-
 	public function testItConfiguresConfigurator()
 	{
 		$request_settings = [
@@ -42,9 +35,14 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => 'http://acdn.images.com/subdir/image.png'
 		];
 
-		$this->setGlobals($request_settings);
+		$request = Mockery::mock(Request::class);
 
-		$configurator = new Configurator;
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
 
 		foreach ($request_settings as $setting => $value) {
 			if ($setting === 'source') {
@@ -65,9 +63,14 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => $this->getPlaceholditImage(500, 400)
 		];
 
-		$this->setGlobals($request_settings);
+		$request = Mockery::mock(Request::class);
 
-		$configurator = new Configurator;
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
 
 		$this->setExpectedException(\InvalidArgumentException::class, 'The requested host is not allowed.');
 		$file = $configurator->setupFile(['not.placehold.it']);
@@ -84,9 +87,14 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => $this->getPlaceholditImage(500, 400)
 		];
 
-		$this->setGlobals($request_settings);
+		$request = Mockery::mock(Request::class);
 
-		$configurator = new Configurator;
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
 
 		$file = $configurator->setupFile($this->placeholdit_domain);
 
@@ -102,9 +110,14 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => $this->getPlaceholditImage(500, 400)
 		];
 
-		$this->setGlobals($request_settings);
+		$request = Mockery::mock(Request::class);
 
-		$configurator = new Configurator;
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
 
 		$file = $configurator->setupFile([$this->placeholdit_domain]);
 
@@ -120,9 +133,14 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => $this->getPlaceholditImage(500, 400)
 		];
 
-		$this->setGlobals($request_settings);
+		$request = Mockery::mock(Request::class);
 
-		$configurator = new Configurator;
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
 
 		$file = $configurator->setupFile([$this->placeholdit_domain]);
 
@@ -142,10 +160,17 @@ class ConfiguratorTest extends ImageResizerTestCase
 			'source' => $this->getPlaceholditImage(500, 400)
 		];
 
-		$this->setGlobals($request_settings);
 		$this->setEnvironmentVariables($this->placeholdit_domain, $cache_expires_hours);
 
-		$configurator = new Configurator;
+		$request = Mockery::mock(Request::class);
+
+		$request->shouldReceive('get')->with('height')->andReturn($request_settings['height']);
+		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
+		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
+		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+
+		$configurator = new Configurator($request);
+
 		$file = $configurator->setupFile([$this->placeholdit_domain]);
 		$configurator->setHeaders();
 

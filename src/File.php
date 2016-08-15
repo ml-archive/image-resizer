@@ -1,4 +1,6 @@
-<?php namespace Fuzz\ImageResizer;
+<?php
+
+namespace Fuzz\ImageResizer;
 
 use Symfony\Component\HttpFoundation\File\File as SymfonyFile;
 use finfo;
