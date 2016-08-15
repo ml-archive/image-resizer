@@ -13,6 +13,20 @@ use InvalidArgumentException;
 class Image
 {
 	/**
+	 * No compression
+	 *
+	 * @const int
+	 */
+	const NO_COMPRESSION = 100;
+
+	/**
+	 * Full compression
+	 *
+	 * @const int
+	 */
+	const FULL_COMPRESSION = 1;
+
+	/**
 	 * The actual resizer
 	 *
 	 * @var Imagick
@@ -46,8 +60,8 @@ class Image
 		$this->validateFile($file);
 
 		$this->image_handler = new Imagick;
-		$this->file = $file;
-		$this->crop = $crop;
+		$this->file          = $file;
+		$this->crop          = $crop;
 
 		$this->readFromBlob($this->file->getRaw());
 	}
@@ -60,11 +74,10 @@ class Image
 	 */
 	public function alterImage($options)
 	{
-		// @todo rewrite into image decorator where each f(x) modifies the image
 		$options = $this->validateOptions($options);
 
 		$this->setImageFormat($options['format']);
-		$this->setCompressionQuality($options['compression']);
+		$this->setQualityLevel($options['min_quality'], $options['max_quality'], $options['max_file_size_bytes']);
 		$this->resizeImage($options['height'], $options['width'], $options['crop']);
 
 		return $this;
@@ -97,9 +110,9 @@ class Image
 	/**
 	 * Resize the image
 	 *
-	 * @param int $height
-	 * @param int $width
-	 * @param bool       $crop
+	 * @param int  $height
+	 * @param int  $width
+	 * @param bool $crop
 	 * @return $this|void
 	 */
 	public function resizeImage($height, $width, $crop = false)
@@ -142,28 +155,49 @@ class Image
 	}
 
 	/**
-	 * Set the compression quality
+	 * Set the handler instance
 	 *
-	 * @param string|int $quality
+	 * @param \Imagick $handler
 	 * @return $this
 	 */
-	public function setCompressionQuality($quality)
+	public function setImageHandler(Imagick $handler)
 	{
-		if (is_numeric($quality)) {
-			$this->image_handler->setImageCompressionQuality($quality);
+		$this->image_handler = $handler;
+
+		return $this;
+	}
+
+	/**
+	 * Set the compression quality
+	 *
+	 * @param int  $min
+	 * @param int  $max
+	 * @param bool $maximum_file_size
+	 * @return $this
+	 */
+	public function setQualityLevel($min = self::FULL_COMPRESSION, $max = self::NO_COMPRESSION, $maximum_file_size = false)
+	{
+		if (! $maximum_file_size) {
+			$this->image_handler->setImageCompressionQuality($max);
 
 			return $this;
 		}
 
-		$quality          = strtoupper($quality);
-		$compression_type = "COMPRESSION_$quality";
-		$constant         = "Imagick::$compression_type";
+		$quality   = $max;
+		$starting_size = strlen($this->toBlob());
+		$size          = $starting_size;
 
-		if (! defined($constant) || is_null(constant("Imagick::$compression_type"))) {
-			throw new InvalidArgumentException('Invalid compression quality specified.');
+		do {
+			$this->image_handler->setImageCompressionQuality($quality);
+			$size = strlen($this->toBlob());
+			$quality--;
+		} while ($quality <= $max && $quality >= $min && $size > $maximum_file_size);
+
+		// If we've gotten this far and have increased the file size, just use the minimum compression (max quality)
+		// because compression is not useful in this situation.
+		if ($size >= $starting_size) {
+			$this->image_handler->setImageCompressionQuality($max);
 		}
-
-		$this->image_handler->setImageCompressionQuality(constant("Imagick::$compression_type"));
 
 		return $this;
 	}
@@ -198,12 +232,26 @@ class Image
 			}
 		}
 
-		$options['format']      = array_key_exists('format', $options) ? $options['format'] : $this->file->getExtension();
-		$options['crop']        = array_key_exists('crop', $options) ? $options['crop'] : false;
-		$options['compression'] = array_key_exists('compression', $options) ? $options['compression'] :
-			100; // Default to no compression
+		$options['format']              = $this->getOptionsKey($options, 'format', $this->file->getExtension());
+		$options['crop']                = $this->getOptionsKey($options, 'crop', false);
+		$options['min_quality']         = $this->getOptionsKey($options, 'min_quality', self::FULL_COMPRESSION);
+		$options['max_quality']         = $this->getOptionsKey($options, 'max_quality', self::NO_COMPRESSION);
+		$options['max_file_size_bytes'] = $this->getOptionsKey($options, 'max_file_size_bytes', false);
 
 		return $options;
+	}
+
+	/**
+	 * Get a key from the array or default
+	 *
+	 * @param array  $options
+	 * @param string $key
+	 * @param mixed  $default
+	 * @return mixed
+	 */
+	private function getOptionsKey(array $options, $key, $default)
+	{
+		return array_key_exists($key, $options) ? $options[$key] : $default;
 	}
 
 	/**

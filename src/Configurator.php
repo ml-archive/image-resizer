@@ -54,9 +54,12 @@ class Configurator
 		$this->setImageSource();
 
 		$this->config = [
-			'height' => $this->request->get('height'),
-			'width'  => $this->request->get('width'),
-			'crop'   => (bool) $this->request->get('crop'),
+			'height'              => (int) $this->request->get('height'),
+			'width'               => (int) $this->request->get('width'),
+			'crop'                => (bool) $this->request->get('crop'),
+			'min_quality'         => (int) $this->request->get('min_quality', Image::FULL_COMPRESSION),
+			'max_quality'         => (int) $this->request->get('max_quality', Image::NO_COMPRESSION),
+			'max_file_size_bytes' => (int) $this->request->get('max_file_size_bytes'),
 		];
 	}
 
@@ -140,7 +143,6 @@ class Configurator
 	 */
 	protected function checkDomain(array $allowed_hosts)
 	{
-		$url = parse_url($this->source);
 		$source_host = parse_url($this->source)['host']; // google.com
 
 		if (! in_array($source_host, $allowed_hosts)) {

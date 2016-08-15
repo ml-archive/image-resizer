@@ -4,6 +4,8 @@ namespace Fuzz\ImageResizer\Tests;
 
 use Fuzz\ImageResizer\File;
 use Fuzz\ImageResizer\Image;
+use Imagick;
+use Mockery;
 
 class ImageTest extends ImageResizerTestCase
 {
@@ -101,9 +103,6 @@ class ImageTest extends ImageResizerTestCase
 
 		$image->alterImage($options);
 
-		// strcmp won't work because by this point the image blob in the imagick instance has been resized and is now different
-		//$this->assertTrue(strcmp($file->getRaw(), $image->getImageHandler()->getImageBlob()) === 0);
-
 		$this->assertNotNull($image->toBlob());
 	}
 
@@ -183,39 +182,25 @@ class ImageTest extends ImageResizerTestCase
 		$this->assertTrue(is_string($image->toBlob()));
 	}
 
-	public function testItThrowsExceptionOnBadCompressionType()
-	{
-		$file  = $this->getImageFile(300, 500);
-		$image = new Image($file, false);
-
-		$options = [
-			'height'      => '200',
-			'width'       => '400',
-			'compression' => 'h264',
-			// not a valid compression type
-		];
-
-		$this->setExpectedException(\InvalidArgumentException::class, 'Invalid compression quality specified.');
-		$image->alterImage($options);
-	}
-
 	public function testItSetsCompressionQuality()
 	{
-		$file  = $this->getImageFile(300, 500);
+		$file  = File::createFromBlob(file_get_contents(__DIR__ . '/images/stock-photo.jpg'));  // ~814kb
 		$image = new Image($file, false);
 
 		$options = [
-			'height'      => '200',
-			'width'       => '400',
-			'compression' => 'jpeg',
+			'height'              => '200',
+			'width'               => '400',
+			'min_quality'         => 2,
+			'max_quality'         => 100,
+			'max_file_size_bytes' => 800000, // 800kb
 		];
 
 		$image->alterImage($options);
 
-		$this->assertEquals(\Imagick::COMPRESSION_JPEG, $image->getImageHandler()->getImageCompressionQuality());
+		$this->assertEquals(96, $image->getImageHandler()->getImageCompressionQuality());
 	}
 
-	public function testItSetsDefaultsToNoCompression()
+	public function testItSetsDefaultsToMaxQuality()
 	{
 		$file  = $this->getImageFile(300, 500);
 		$image = new Image($file, false);
@@ -227,7 +212,7 @@ class ImageTest extends ImageResizerTestCase
 
 		$image->alterImage($options);
 
-		$this->assertEquals(100, $image->getImageHandler()->getImageCompressionQuality());
+		$this->assertEquals(Image::NO_COMPRESSION, $image->getImageHandler()->getImageCompressionQuality());
 	}
 
 	public function testItGarbageCollectsImagickInstance()
@@ -298,32 +283,133 @@ class ImageTest extends ImageResizerTestCase
 		$this->assertEquals($image, $return);
 	}
 
-	public function testItSetsNumbericCompressionQuality()
+	public function testItSetsImageHandler()
 	{
 		$file  = $this->getImageFile(300, 500);
 		$image = new Image($file, false);
 
-		$image->setCompressionQuality(8);
+		$new_handler = Mockery::mock(Imagick::class);
 
-		$this->assertEquals(8, $image->getImageHandler()->getImageCompressionQuality());
+		$image->setImageHandler($new_handler);
+
+		$this->assertEquals($new_handler, $new_handler);
+
+		$new_handler->shouldReceive('testMethod')->andReturn('a test!');
+
+		$this->assertEquals('a test!', $image->getImageHandler()->testMethod());
 	}
 
-	public function testItThrowsExceptionOnInvalidCompressionType()
+	public function testItUsesMaxQualityIfMaximumFileSizeNotSet()
 	{
 		$file  = $this->getImageFile(300, 500);
 		$image = new Image($file, false);
 
-		$this->setExpectedException(\InvalidArgumentException::class, 'Invalid compression quality specified.');
-		$image->setCompressionQuality('not a compression type');
+		$return = $image->setQualityLevel(2, 100);
+
+		$this->assertEquals(100, $image->getImageHandler()->getImageCompressionQuality());
+		$this->assertEquals($image, $return);
 	}
 
-	public function testItSetsStringCompressionQualityAndReturnsStatic()
+	public function testItUsesMaximumQualityIfGoodEnough()
 	{
-		$file  = $this->getImageFile(300, 500);
-		$image = new Image($file, false);
+		$file        = $this->getImageFile(300, 500);
+		$image       = new Image($file, false);
+		$new_handler = Mockery::mock(Imagick::class);
+		$image->setImageHandler($new_handler);
 
-		$image->setCompressionQuality('jpeg');
+		$new_handler->shouldReceive('getimageblob')->andReturn(openssl_random_pseudo_bytes(400));
+		$new_handler->shouldReceive('getimageblob')->andReturn(openssl_random_pseudo_bytes(400));
+		$new_handler->shouldReceive('setimagecompressionquality')->with(100);
 
-		$this->assertEquals(8, $image->getImageHandler()->getImageCompressionQuality());
+		$return = $image->setQualityLevel(5, 100, 1500);
+
+		$this->assertEquals($image, $return);
+	}
+
+	public function testItUsesMaxCompressionAndNoLower()
+	{
+		$file        = $this->getImageFile(300, 500);
+		$image       = new Image($file, false);
+		$new_handler = Mockery::mock(Imagick::class);
+		$image->setImageHandler($new_handler);
+
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1600));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(5);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1590));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(6);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1580));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(7);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1550));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(8);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1540));
+
+		$new_handler->shouldNotReceive('setimagecompressionquality')->with(9);
+		$new_handler->shouldNotReceive('getimageblob');
+
+		$return = $image->setQualityLevel(5, 8, 1500);
+
+		$this->assertEquals($image, $return);
+	}
+
+	public function testItUsesMaxQualityIfFileSizeHasNetIncreaseInRequestedCompressionRange()
+	{
+		$file        = $this->getImageFile(300, 500);
+		$image       = new Image($file, false);
+		$new_handler = Mockery::mock(Imagick::class);
+		$image->setImageHandler($new_handler);
+
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1600));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(5);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1800));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(6);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1700));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(7);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1650));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(8);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1625));
+
+		// Should finally set the min compression (max quality) because we don't gain anything by compressing further
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(8);
+
+		$return = $image->setQualityLevel(5, 8, 1500);
+
+		$this->assertEquals($image, $return);
+	}
+
+	public function testItUsesMaxQualityIfFileSizeHasNoNetDecreaseInRequestedCompressionRange()
+	{
+		$file        = $this->getImageFile(300, 500);
+		$image       = new Image($file, false);
+		$new_handler = Mockery::mock(Imagick::class);
+		$image->setImageHandler($new_handler);
+
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1600));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(5);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1800));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(6);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1700));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(7);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1650));
+
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(8);
+		$new_handler->shouldReceive('getimageblob')->once()->andReturn(openssl_random_pseudo_bytes(1625));
+
+		// Should finally set the min compression (max quality) because we don't gain anything by compressing further
+		$new_handler->shouldReceive('setimagecompressionquality')->once()->with(8);
+
+		$return = $image->setQualityLevel(5, 8, 1500);
+
+		$this->assertEquals($image, $return);
 	}
 }

@@ -41,6 +41,12 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
@@ -69,6 +75,9 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
@@ -93,6 +102,9 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
@@ -116,6 +128,9 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
@@ -139,6 +154,9 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
@@ -168,6 +186,9 @@ class ConfiguratorTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn($request_settings['width']);
 		$request->shouldReceive('get')->with('crop')->andReturn($request_settings['crop']);
 		$request->shouldReceive('get')->with('source')->andReturn($request_settings['source']);
+		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$configurator = new Configurator($request);
 
