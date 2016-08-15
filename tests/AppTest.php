@@ -4,6 +4,7 @@ namespace Fuzz\ImageResizer\Tests;
 
 use Fuzz\ImageResizer\App;
 use Fuzz\ImageResizer\File;
+use Fuzz\ImageResizer\Image;
 use Imagick;
 use Mockery;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,8 +30,8 @@ class AppTest extends ImageResizerTestCase
 		$request->shouldReceive('get')->with('width')->andReturn(300);
 		$request->shouldReceive('get')->with('crop')->andReturn(false);
 		$request->shouldReceive('get')->with('source')->andReturn($this->getPlaceholditImage(300, 500));
-		$request->shouldReceive('get')->with('min_quality')->andReturn(10);
-		$request->shouldReceive('get')->with('max_quality')->andReturn(100);
+		$request->shouldReceive('get')->with('min_quality', Image::FULL_COMPRESSION)->andReturn(10);
+		$request->shouldReceive('get')->with('max_quality', image::NO_COMPRESSION)->andReturn(100);
 		$request->shouldReceive('get')->with('max_file_size_bytes')->andReturn(2200);
 
 		$image_blob = App::run($request);
