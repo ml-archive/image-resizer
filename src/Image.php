@@ -183,7 +183,7 @@ class Image
 			return $this;
 		}
 
-		$quality   = $max;
+		$quality       = $max;
 		$starting_size = strlen($this->toBlob());
 		$size          = $starting_size;
 

@@ -85,7 +85,7 @@ class File
 		register_shutdown_function(
 			[
 				$this,
-				'unlink'
+				'unlink',
 			]
 		);
 	}

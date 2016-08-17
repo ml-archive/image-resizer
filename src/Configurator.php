@@ -143,7 +143,7 @@ class Configurator
 	 */
 	protected function checkDomain(array $allowed_hosts)
 	{
-		$source_host = parse_url($this->source)['host']; // google.com
+		$source_host = parse_url($this->source)['host'];
 
 		if (! in_array($source_host, $allowed_hosts)) {
 			throw new \InvalidArgumentException('The requested host is not allowed.');
