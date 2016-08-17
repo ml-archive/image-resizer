@@ -1,4 +1,6 @@
-<?php namespace Fuzz\ImageResizer;
+<?php
+
+namespace Fuzz\ImageResizer;
 
 use Symfony\Component\HttpFoundation\File\File as SymfonyFile;
 use finfo;
@@ -83,7 +85,7 @@ class File
 		register_shutdown_function(
 			[
 				$this,
-				'unlink'
+				'unlink',
 			]
 		);
 	}

@@ -8,6 +8,13 @@ use Carbon\Carbon;
 class Configurator
 {
 	/**
+	 * Default value for cache expiration (in hours)
+	 *
+	 * @var int
+	 */
+	protected $cache_expiration_hours = 2880;
+
+	/**
 	 * Request container
 	 *
 	 * @var \Symfony\Component\HttpFoundation\Request
@@ -36,64 +43,23 @@ class Configurator
 	public $file;
 
 	/**
-	 * Return an RFC {large number here} compliant date from a Carbon date object
-	 *
-	 * Example: Wed, 21 Oct 2015 13:48:28 GMT
-	 *
-	 * @param \Carbon\Carbon $carbon
-	 * @param int            $offset
-	 * @return string
-	 */
-	private function getRfcCompliantDate(Carbon $carbon, $offset = 0)
-	{
-		return gmdate('D, d M Y H:i:s', $carbon->addHours($offset)->getTimestamp()) . ' GMT';
-	}
-
-	/**
-	 * Determine an appropriate source for the file
-	 *
-	 * @return void
-	 */
-	protected function setImageSource()
-	{
-		// Default
-		$path = $this->request->getPathInfo();
-
-		if ($this->request->get('source')) {
-			$this->source = $this->request->get('source');
-		} else {
-			$this->source = $path;
-		}
-	}
-
-	/**
-	 * Make sure we're only resizing images from allowed hosts
-	 *
-	 * @param array $allowed_hosts
-	 */
-	protected function checkDomain(array $allowed_hosts)
-	{
-		$source_host = parse_url($this->source)['host']; // google.com
-
-		if (! in_array($source_host, $allowed_hosts)) {
-			http_response_code(401);
-			throw new \InvalidArgumentException('The requested host is not allowed.');
-		}
-	}
-
-	/**
 	 * Class constructor
+	 *
+	 * @param \Symfony\Component\HttpFoundation\Request $request
 	 */
-	public function __construct()
+	public function __construct(Request $request)
 	{
-		$this->request = Request::createFromGlobals();
+		$this->request = $request;
 
 		$this->setImageSource();
 
 		$this->config = [
-			'height' => $this->request->get('height'),
-			'width'  => $this->request->get('width'),
-			'crop'   => (bool) $this->request->get('crop'),
+			'height'              => (int) $this->request->get('height'),
+			'width'               => (int) $this->request->get('width'),
+			'crop'                => (bool) $this->request->get('crop'),
+			'min_quality'         => (int) $this->request->get('min_quality', Image::FULL_COMPRESSION),
+			'max_quality'         => (int) $this->request->get('max_quality', Image::NO_COMPRESSION),
+			'max_file_size_bytes' => (int) $this->request->get('max_file_size_bytes'),
 		];
 	}
 
@@ -122,7 +88,7 @@ class Configurator
 	 */
 	public function setHeaders()
 	{
-		$expire_in = getenv('CACHE_EXPIRATION_HOURS') ?: 2880; //120 days by default
+		$expire_in = getenv('CACHE_EXPIRATION_HOURS') ?: $this->cache_expiration_hours;
 		// Set time for cache expires. Default to 120 days (2880 hours)
 		$expires         = $this->getRfcCompliantDate(Carbon::now(), $expire_in);
 		$last_modified   = $this->getRfcCompliantDate(Carbon::now(), 0);
@@ -134,7 +100,6 @@ class Configurator
 
 		// File specific headers
 		header('Content-Type: ' . $this->file->getMimeType());
-		//header('Content-Length: ' . $this->file->getSize()); @todo This is causing problems with Cloudfront caching, why?
 	}
 
 	/**
@@ -147,14 +112,55 @@ class Configurator
 	{
 		$required_variables = [
 			'ALLOWED_HOSTS',
-			'CACHE_EXPIRATION_HOURS',
 		];
 
 		foreach ($required_variables as $required) {
 			if (! getenv($required)) {
-				http_response_code(500);
 				throw new \LogicException("The $required configuration is missing.");
 			}
 		}
+	}
+
+	/**
+	 * Determine an appropriate source for the file
+	 *
+	 * @return void
+	 */
+	protected function setImageSource()
+	{
+		if ($this->request->get('source')) {
+			$this->source = $this->request->get('source');
+		} else {
+			// Default
+			$this->source = $this->request->getPathInfo();
+		}
+	}
+
+	/**
+	 * Make sure we're only resizing images from allowed hosts
+	 *
+	 * @param array $allowed_hosts
+	 */
+	protected function checkDomain(array $allowed_hosts)
+	{
+		$source_host = parse_url($this->source)['host'];
+
+		if (! in_array($source_host, $allowed_hosts)) {
+			throw new \InvalidArgumentException('The requested host is not allowed.');
+		}
+	}
+
+	/**
+	 * Return an RFC {large number here} compliant date from a Carbon date object
+	 *
+	 * Example: Wed, 21 Oct 2015 13:48:28 GMT
+	 *
+	 * @param \Carbon\Carbon $carbon
+	 * @param int            $offset
+	 * @return string
+	 */
+	private function getRfcCompliantDate(Carbon $carbon, $offset = 0)
+	{
+		return gmdate('D, d M Y H:i:s', $carbon->addHours($offset)->getTimestamp()) . ' GMT';
 	}
 }
