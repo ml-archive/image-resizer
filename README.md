@@ -1,4 +1,4 @@
-# Fuzz Image Resizer
+# Fuzz Image Resizer [![Slack Status](https://fuzz-opensource.herokuapp.com/badge.svg)](https://fuzz-opensource.herokuapp.com/)
 A lightweight PHP image resizer
 
 ### Out of the box usage
