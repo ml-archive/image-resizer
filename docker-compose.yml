@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  resizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9000:80"
+    environment:
+      ALLOWED_HOSTS: "localhost"
+      APP_ENV: "live"
