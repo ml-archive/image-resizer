@@ -56,6 +56,11 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 573BFD6B3D
 RUN apt-get install --no-install-recommends --no-install-suggests -q -y \
     nginx=1.14.0-1~stretch
 
+RUN apt-get update && apt-get install -y \
+    libmagickwand-dev --no-install-recommends \
+    && pecl install imagick \
+	&& docker-php-ext-enable imagick
+    
 # Whitelist ALLOWED_HOSTS and APP_ENV in fpm config
 RUN { \
       echo 'env[ALLOWED_HOSTS] = $ALLOWED_HOSTS'; \
@@ -68,6 +73,13 @@ RUN wget https://getcomposer.org/download/1.9.3/composer.phar && \
     chmod a+x /usr/local/bin/composer
 
 COPY --from=intermediate --chown=www-data:www-data /var/www/app/vendor /var/www/app/vendor
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY --chown=www-data:www-data default.conf /etc/nginx/conf.d
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisor.conf
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisor.conf"]
 
 # Use unprivileged user
 WORKDIR /var/www/app
