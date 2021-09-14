@@ -28,3 +28,4 @@ In light of exploits like https://imagetragick.com/, we recommend that your impl
 
 ### Tests
 Run `phpunit`
+
